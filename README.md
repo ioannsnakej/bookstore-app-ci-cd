@@ -2,5 +2,5 @@ Bookstore - CRUD app
 
 Требования:
 
-python 3.12
-postgresql 16
+1. python 3.12
+2. postgresql 16
