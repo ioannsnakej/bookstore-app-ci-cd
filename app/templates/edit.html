@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Bookstore</title>
+{% endblock %}
+
+{% block content %}
+<h1>Редактировать книгу</h1>
+    
+    {% if book %}
+    <form method="post">
+        <div class="mb-3">
+            <label for="title" class="form-label">Название книги</label>
+            <input type="text" class="form-control" name="title" id="title" 
+                   value="{{ book[1] }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="author" class="form-label">Автор</label>
+            <input type="text" class="form-control" name="author" id="author" 
+                   value="{{ book[2] }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="price" class="form-label">Цена (руб.)</label>
+            <input type="number" step="0.01" class="form-control" name="price" id="price" 
+                   value="{{ book[3] }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="count" class="form-label">Количество</label>
+            <input type="number" class="form-control" name="count" id="count" 
+                   value="{{ book[4] }}" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+        <a href="/books" class="btn btn-secondary">Отмена</a>
+    </form>
+    {% else %}
+    <div class="alert alert-warning">Книга не найдена</div>
+    {% endif %}
+
+{% endblock %}

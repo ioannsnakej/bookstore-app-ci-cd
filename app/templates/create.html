@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Bookstore</title>
+{% endblock %}
+
+{% block content %}
+<h1>Create book</h1>
+<form method="post">
+    <input type="text" class="form-control" name="title" id="title" placeholder="Введите название книги"><br>
+    <input type="text" class="form-control" name="author" id="author" placeholder="Введите имя автора"><br>
+    <input type="text" class="form-control" name="price" id="price" placeholder="Введите стоимость"><br>
+    <input type="text" class="form-control" name="count" id="count" placeholder="Введите количество книг"><br>
+    <button class="btn btn-success" type="submit">Добавить товар</button>
+</form>
+
+{% endblock %}

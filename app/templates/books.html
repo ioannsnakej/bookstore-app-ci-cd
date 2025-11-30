@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Bookstore</title>
+{% endblock %}
+
+{% block content %}
+    
+    <!-- Блок с flash-сообщениями -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>Наши книги</h2>
+    
+    {% if books %}
+        <div class="books-container">
+            {% for book in books %}
+            <div class="book-card">
+                <h3 class="book-title">{{ book[1] }}</h3>
+                <p class="book-author"><strong>Автор:</strong> {{ book[2] }}</p>
+                <p class="book-price"><strong>Цена:</strong> {{ book[3] }} руб.</p>
+                {% if book[4] > 0 %}
+                    <p class="book-stock"><strong>В наличии:</strong> {{ book[4] }} шт.</p>
+                {% else %}
+                    <p class="book-stock-none"><strong>Нет в наличии</strong></p>
+                {% endif %}
+                
+                <div class="book-actions">
+                    <a href="/edit/{{ book[0] }}" class="btn btn-primary btn-sm">Редактировать</a>
+                    <a href="/buy/{{ book[0] }}" class="btn btn-success btn-sm">Купить</a>
+                    <a href="/delete/{{ book[0] }}" class="btn btn-danger btn-sm" 
+                       onclick="return confirm('Удалить книгу «{{ book[1] }}»?')">Удалить</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    
+    {% else %}
+        <div class="alert alert-info">
+            <p>Книги не найдены.</p>
+        </div>
+    {% endif %}
+{% endblock %}
