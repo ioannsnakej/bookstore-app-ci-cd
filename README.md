@@ -46,7 +46,7 @@ curl http://localhost:8000/delete/23
 - ./ansible/roles/install-docker
 - ./ansible/roles/setup-bookstore-app
 
-#### install-docker
+### install-docker
 Устанавливает docker на ВМ (работает только с ubuntu)
 
 ### setup-bookstore-app
@@ -57,3 +57,9 @@ curl http://localhost:8000/delete/23
 - `db_host` - хост, где находится postgres
 - `db_password` - пароль пользователя `db_user`
 и запускает проект с помощью docker compose
+
+### Реализована так же роль setup-jenkins-agent для настройки ВМ - jenkins-agent
+Tasks:
+- `instal_java` - устанавливает java на jenkins-agent, без нее не выполнится pipeline
+- `create_user` - добавляет пользователя jenkins на jenkins-agent, от имени которого будет выполняться pipeline
+- `setup_agent` - добавляет публичный ключ jenkins из ./files/jenkins_key.pub в файл authorized_key на jenkins-agent
