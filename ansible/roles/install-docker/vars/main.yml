@@ -5,3 +5,4 @@ packages:
   - ca-certificates
   - curl
   - gnupg2
+  - git

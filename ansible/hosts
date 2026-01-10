@@ -1,3 +1,2 @@
-[ubuntu]
-demo ansible_host=192.168.56.2 ansible_user=devops
-runner ansible_host=192.168.56.4 ansible_user=devops
+[app-vm]
+192.168.56.7
