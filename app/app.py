@@ -55,9 +55,14 @@ def create():
     
     else:
         return render_template('create.html')
-@app.route('/edit')
+
+@app.route('/edit', defaults={'id': None})
+@app.route('/edit/', defaults={'id': None})
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
+    if id is None:
+        flash('Для редактирования укажите ID книги', 'error')
+        return redirect('/books')
     if request.method == "POST":
         # Обработка формы редактирования
         try:
@@ -103,36 +108,13 @@ def edit(id):
             flash(f'Ошибка: {str(e)}', 'error')
             return redirect('/books')
 
-@app.route('/buy/<int:id>')
-def buy(id):
-    """Покупка книги (уменьшение количества)"""
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-        
-        # Проверяем есть ли книга в наличии
-        cur.execute('SELECT title, count FROM books WHERE id = %s', (id,))
-        book = cur.fetchone()
-        
-        if book and book[1] > 0:
-            # Уменьшаем количество
-            cur.execute('UPDATE books SET count = count - 1 WHERE id = %s', (id,))
-            conn.commit()
-            flash(f'Вы купили книгу "{book[0]}"!', 'success')
-        else:
-            flash('Книга недоступна для покупки', 'error')
-        
-        cur.close()
-        conn.close()
-        
-    except Exception as e:
-        flash(f'Ошибка при покупке: {str(e)}', 'error')
-    
-    return redirect('/books')
-
+@app.route('/delete', defaults={'id': None})
+@app.route('/delete/', defaults={'id': None})
 @app.route('/delete/<int:id>')
 def delete(id):
-    """Удаление книги"""
+    if id is None:
+        flash('Для удаления укажите ID книги', 'error')
+        return redirect('/books')
     try:
         conn = get_connection()
         cur = conn.cursor()

@@ -1,0 +1,127 @@
+def remote = [:]
+pipeline {
+    agent {
+        label 'docker'
+    }
+
+    parameters {
+        gitParameter(
+            type: 'PT_BRANCH', 
+            name: 'BRANCH', 
+            branchFilter: 'origin/.*', 
+            sortMode: 'DESCENDING_SMART',
+            defaultValue: 'main',
+            quickFilterEnabled: true
+        )
+        string(
+            name: 'HOST',
+            defaultValue: '192.168.56.7'
+            description: 'Host for deploy'
+        )
+        booleanParam(
+            name: 'ROLLBACK',
+            defaultValue: false
+            description: 'Откатить на версию $TAG'
+        )
+        booleanParam(
+            name: 'RUN_TEST',
+            defaultValue: true
+            description: 'Запуск тестов'
+        )
+        string(
+            name: 'TAG',
+            defaultValue: '',
+            description: 'Тэг (:bookstore-1) для rollback'
+        )
+    }
+    environment {
+        DOCKER_REPO = 'ivankhodyrev/bookstore-app'
+        DOCKER_TOKEN = credentials('docker_token')
+        REPO_USER = 'ivan'
+        GIT_URL = 'git@github.com:ioannsnakej/diplom.git'
+        PRJ_DIR = '/var/www/bookstore-app'
+    }
+
+    stages {
+        stage('Configure credentials'){
+            steps {
+                withCredentials([sshPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                    script {
+                        remote.name = "${params.HOST}"
+                        remote.host = "${params.HOST}"
+                        remote.user = "${username}"
+                        remote.identity = readFile "${private_key}"
+                        remote.allowAnyHosts = true
+                    }
+                }
+            }
+        }
+
+        stage('Checkout repo'){
+            steps {
+                sshCommand remote: remote, command: """
+                    set -ex; set -o pipefail
+                    test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
+                    cd ${env.PRJ_DIR}
+                    git checkout ${params.BRANCH}
+                    git pull
+                """
+            }
+        }
+
+        stage('Build image') {
+            when {
+                expression { params.RUN_TEST && !params.ROLLBACK }
+            }
+            steps {
+                sh """
+                    docker build -t ${env.DOCKER_REPO}:${BUILD_NUMBER} .
+                """
+            }
+        }
+
+        stage('Push image'){
+            when {
+                expression { !params.ROLLBACK }
+            }
+            steps {
+                sh """
+                    docker login -u ${env.REPO_USER} -p ${env.DOCKER_TOKEN}
+                    docker push ${env.DOCKER_REPO}:${BUILD_NUMBER}
+                    docker logout
+                """
+            }
+        }
+
+        stage('Run tests'){
+            when {
+                expression { !params.ROLLBACK }
+            }
+            steps {
+                warnError('Test failed'){
+                    sh """
+                        set -e
+                        docker rf -f \$(docker ps -a -q) || true
+                        docker network create tests
+                        docker run -d --name db \
+                            -e POSTGRES_USER=postgres \
+                            -e POSTGRES_PASSWORD=postgres \
+                            -e POSTGRES_DB=mydb \
+                            --network=tests \
+                            postgres:16
+                        echo "Waiting for db.."
+                        sleep 10
+                        docker run -d --name backend \
+                            -e DB_USER=postgres \
+                            -e DB_PASS=postgres \
+                            -e DB_NAME=mydb \
+                            -e DB_HOST=db \
+                            --network=tests \
+                            ${env.DOCKER_REPO}:${BUILD_NUMBER}
+                        docker exec backend pytest -v --disable-warnings --maxfail=1
+                    """
+                }
+            }
+        }
+    }
+}
