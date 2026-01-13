@@ -147,16 +147,16 @@ pipeline {
                     set -ex; set -o pipefail
                     cd ${env.PRJ_DIR}
                     if [ -f .env ] && grep 'DB_PASS' .env; then
-                        DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+                        DB_PASS=\$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
                     else
-                        DB_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
+                        DB_PASS=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
                     fi
                     cat > .env << EOF
                     APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
-                    DB_USER=${DB_USER}
-                    DB_NAME=${DB_NAME}
-                    DB_HOST=${DB_HOST}
-                    DB_PASS=${DB_PASS}
+                    DB_USER=${env.DB_USER}
+                    DB_NAME=${env.DB_NAME}
+                    DB_HOST=${env.DB_HOST}
+                    DB_PASS=\${DB_PASS}
                     EOF
                     echo "✅ .env is ready"
                 """
@@ -186,7 +186,7 @@ pipeline {
                     cd ${env.PRJ_DIR}
                     test -f .env || touch .env
                     sed -i '/APP_IMAGE=/d' .env
-                    echo "APP_IMAGE="${env.DOCKER_REPO}:${TAG}" >> .env
+                    echo "APP_IMAGE="${env.DOCKER_REPO}:${env.TAG}" >> .env
                     docker compose up -d backend --force-recreate
                 """
             }
