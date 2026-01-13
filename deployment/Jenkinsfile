@@ -64,6 +64,7 @@ pipeline {
             steps {
                 sshCommand remote: remote, command: """
                     set -ex; set -o pipefail
+                    sudo mkdir -p /var/www
                     sudo chown -R jenkins:jenkins /var/www
                     test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
                     cd ${env.PRJ_DIR}
