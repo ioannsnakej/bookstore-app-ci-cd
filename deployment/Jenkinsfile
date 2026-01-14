@@ -37,7 +37,7 @@ pipeline {
     environment {
         DOCKER_REPO = 'ivankhodyrev/bookstore-app'
         DOCKER_TOKEN = credentials('docker_token')
-        REPO_USER = 'ivan'
+        REPO_USER = 'ivankhodyrev'
         GIT_URL = 'git@github.com:ioannsnakej/diplom.git'
         PRJ_DIR = '/home/jenkins/bookstore-app'
         DB_USER="bookstore-user"
