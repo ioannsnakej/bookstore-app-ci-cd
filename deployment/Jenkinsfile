@@ -109,7 +109,7 @@ pipeline {
                             --network=tests \
                             ${env.DOCKER_REPO}:${BUILD_NUMBER}
                         sleep 10
-                        docker exec backend python -m pytest tests_app.py -v --disable-warnings --maxfail=1
+                        docker exec backend python -m pytest app/tests_app.py -v --disable-warnings --maxfail=1
                         docker rm -f backend db
                         docker network rm tests
                     """
@@ -154,8 +154,8 @@ pipeline {
             steps {
                 sshCommand remote: remote, command: """
                     set -ex; set -o pipefail
-                    sudo mkdir -p ${env.PRJ_DIR}
-                    sudo chown -R jenkins:jenkins ${env.PRJ_DIR}
+                    mkdir -p ${env.PRJ_DIR}
+                    chown -R jenkins:jenkins ${env.PRJ_DIR}
                     mkdir -p ${env.PRJ_DIR}/nginx
                     mkdir -p ${env.PRJ_DIR}/app
                     mkdir -p ${env.PRJ_DIR}/app/static
