@@ -83,7 +83,7 @@ pipeline {
                         #!/bin/bash
                         set -e
                         docker rm -f \$(docker ps -a -q) || true
-                        docker network create tests
+                        docker network create tests 2>/dev/null || true
                         docker run -d --name db \
                             -e POSTGRES_USER=postgres \
                             -e POSTGRES_PASSWORD=postgres \
@@ -161,7 +161,7 @@ pipeline {
                     mkdir -p ${env.PRJ_DIR}/app/static
                 """
                 sh """
-                    scp -i \${private_key} compose.yml \
+                    scp -i ${private_key} compose.yml \
                     ${remote.user}@${remote.host}:${env.PRJ_DIR}/compose.yml
 
                     scp -i \${private_key} nginx/bookstore.conf \
