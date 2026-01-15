@@ -158,7 +158,7 @@ pipeline {
                         scp nginx/bookstore.conf \
                         ${remote.user}@${remote.host}:${env.PRJ_DIR}/nginx/
 
-                        scp app/init_db_sql \
+                        scp app/init_db.sql \
                         ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
                     """
                     sshCommand remote: remote, command: """
