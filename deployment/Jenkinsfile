@@ -170,12 +170,12 @@ pipeline {
                             DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
                         fi
                         cat > .env << EOF
-                        APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
-                        DB_USER=${env.DB_USER}
-                        DB_NAME=${env.DB_NAME}
-                        DB_HOST=${env.DB_HOST}
-                        DB_PASS=\${DB_PASS}
-                        EOF
+                    APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
+                    DB_USER=${env.DB_USER}
+                    DB_NAME=${env.DB_NAME}
+                    DB_HOST=${env.DB_HOST}
+                    DB_PASS=\${DB_PASS}
+                    EOF
                         echo "✅ .env is ready"
                     """
                     sshCommand remote: remote, command: """
