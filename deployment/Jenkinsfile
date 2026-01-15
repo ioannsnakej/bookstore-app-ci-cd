@@ -129,8 +129,8 @@ pipeline {
                 """
             }
         }
-    //Настраиваю параметры для удаленного подключения для деплоя
-        stage('Configure credentials'){
+
+        stage('Deploy'){
             when {
                 expression { !params.ROLLBACK }
             }
@@ -143,58 +143,49 @@ pipeline {
                         remote.identity = readFile "${private_key}"
                         remote.allowAnyHosts = true
                     }
-                }
-            }
-        }
+                    sshCommand remote: remote, command: """
+                        set -ex; set -o pipefail
+                        mkdir -p ${env.PRJ_DIR}
+                        chown -R jenkins:jenkins ${env.PRJ_DIR}
+                        mkdir -p ${env.PRJ_DIR}/nginx
+                        mkdir -p ${env.PRJ_DIR}/app
+                        mkdir -p ${env.PRJ_DIR}/app/static
+                    """
+                    sh """
+                        scp compose.yml \
+                        ${remote.user}@${remote.host}:${env.PRJ_DIR}/compose.yml
 
-        stage('Deploy'){
-            when {
-                expression { !params.ROLLBACK }
-            }
-            steps {
-                sshCommand remote: remote, command: """
-                    set -ex; set -o pipefail
-                    mkdir -p ${env.PRJ_DIR}
-                    chown -R jenkins:jenkins ${env.PRJ_DIR}
-                    mkdir -p ${env.PRJ_DIR}/nginx
-                    mkdir -p ${env.PRJ_DIR}/app
-                    mkdir -p ${env.PRJ_DIR}/app/static
-                """
-                sh """
-                    scp -i compose.yml \
-                    ${remote.user}@${remote.host}:${env.PRJ_DIR}/compose.yml
+                        scp nginx/bookstore.conf \
+                        ${remote.user}@${remote.host}:${env.PRJ_DIR}/nginx/
 
-                    scp -i nginx/bookstore.conf \
-                    ${remote.user}@${remote.host}:${env.PRJ_DIR}/nginx/
-
-                    scp app/init_db_sql \
-                    ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
-                """
-                sshCommand remote: remote, command: """
-                    set -ex; set -o pipefail
-                    cd ${env.PRJ_DIR}
-                    if [ -f .env ] && grep 'DB_PASS' .env; then
-                        DB_PASS=\$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
-                    else
-                        DB_PASS=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
-                    fi
-                    cat > .env << EOF
-                    APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
-                    DB_USER=${env.DB_USER}
-                    DB_NAME=${env.DB_NAME}
-                    DB_HOST=${env.DB_HOST}
-                    DB_PASS=\${DB_PASS}
-                    EOF
-                    echo "✅ .env is ready"
-                """
-                sshCommand remote: remote, command: """
-                    set -ex
-                    cd ${env.PRJ_DIR}
-                    docker compose pull
-                    docker compose down || true
-                    docker compose up -d
-                    docker compose ps
-                """
+                        scp app/init_db_sql \
+                        ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
+                    """
+                    sshCommand remote: remote, command: """
+                        set -ex; set -o pipefail
+                        cd ${env.PRJ_DIR}
+                        if [ -f .env ] && grep 'DB_PASS' .env; then
+                            DB_PASS=\$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+                        else
+                            DB_PASS=\$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c12)
+                        fi
+                        cat > .env << EOF
+                        APP_IMAGE=${env.DOCKER_REPO}:${BUILD_NUMBER}
+                        DB_USER=${env.DB_USER}
+                        DB_NAME=${env.DB_NAME}
+                        DB_HOST=${env.DB_HOST}
+                        DB_PASS=\${DB_PASS}
+                        EOF
+                        echo "✅ .env is ready"
+                    """
+                    sshCommand remote: remote, command: """
+                        set -ex
+                        cd ${env.PRJ_DIR}
+                        docker compose pull
+                        docker compose down || true
+                        docker compose up -d
+                        docker compose ps
+                    """
             }
         }
 
@@ -203,14 +194,23 @@ pipeline {
                 expression { params.ROLLBACK == true }
             }
             steps {
-                sshCommand remote: remote, command: """
-                    set -ex; set -o pipefail
-                    cd ${env.PRJ_DIR}
-                    test -f .env || touch .env
-                    sed -i '/APP_IMAGE=/d' .env
-                    echo "APP_IMAGE="${env.DOCKER_REPO}:${env.TAG}" >> .env
-                    docker compose up -d backend --force-recreate
-                """
+                steps {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                        script {
+                            remote.name = "${params.HOST}"
+                            remote.host = "${params.HOST}"
+                            remote.user = "${username}"
+                            remote.identity = readFile "${private_key}"
+                            remote.allowAnyHosts = true
+                        }
+                        sshCommand remote: remote, command: """
+                            set -ex; set -o pipefail
+                            cd ${env.PRJ_DIR}
+                            test -f .env || touch .env
+                            sed -i '/APP_IMAGE=/d' .env
+                            echo "APP_IMAGE="${env.DOCKER_REPO}:${env.TAG}" >> .env
+                            docker compose up -d backend --force-recreate
+                        """
             }
         }
     }
