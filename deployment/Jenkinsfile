@@ -53,7 +53,6 @@ pipeline {
                     sh """
                         #!/bin/bash
                         set -ex
-                        set -o pipefail
                         test -d ${env.PRJ_DIR} || git clone ${env.GIT_URL} ${env.PRJ_DIR}
                         cd ${env.PRJ_DIR}
                         git checkout ${params.BRANCH}
