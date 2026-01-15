@@ -40,8 +40,8 @@ pipeline {
         REPO_USER = 'ivankhodyrev'
         GIT_URL = 'git@github.com:ioannsnakej/diplom.git'
         PRJ_DIR = '/home/jenkins/bookstore-app'
-        DB_USER="bookstore-user"
-        DB_NAME="bookstore-db"
+        DB_USER="user"
+        DB_NAME="bookstore"
         DB_HOST="db"
     }
 
