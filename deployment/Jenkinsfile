@@ -161,13 +161,13 @@ pipeline {
                     mkdir -p ${env.PRJ_DIR}/app/static
                 """
                 sh """
-                    scp -i ${private_key} compose.yml \
+                    scp -i compose.yml \
                     ${remote.user}@${remote.host}:${env.PRJ_DIR}/compose.yml
 
-                    scp -i \${private_key} nginx/bookstore.conf \
+                    scp -i nginx/bookstore.conf \
                     ${remote.user}@${remote.host}:${env.PRJ_DIR}/nginx/
 
-                    scp -i \${private_key} app/init_db_sql \
+                    scp app/init_db_sql \
                     ${remote.user}@${remote.host}:${env.PRJ_DIR}/app/
                 """
                 sshCommand remote: remote, command: """
