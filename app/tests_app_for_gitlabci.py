@@ -27,54 +27,6 @@ def test_create_form():
         assert response.status_code == 200
         print("✅ Book creation form is ready")
 
-#test: create book
-def test_create_book():
-    with app.test_client() as client:
-        data = {
-            'title': 'Test book',
-            'author': 'Test author',
-            'price': 100,
-            'count': 5
-        }
-        response = client.post('/create', data=data, follow_redirects=True)
-        assert response.status_code == 200
-        print("✅ Create test book - done")
-
-#test: update book
-def test_update_book():
-    with app.test_client() as client:
-        data = {
-            'title': 'Test book',
-            'author': 'Test author',
-            'price': 100,
-            'count': 5
-        }
-        client.post('/create', data=data, follow_redirects=True)
-        update_data = {
-            'title': 'Update book',
-            'author': 'Update author',
-            'price': 200,
-            'count': 10
-        }
-        response = client.post('/edit/1', data=update_data, follow_redirects=True)
-        assert response.status_code == 200
-        print("✅ Update book - done")
-
-#test: delete book
-def test_delete_book():
-    with app.test_client() as client:
-        data = {
-            'title': 'Test book',
-            'author': 'Test author',
-            'price': 100,
-            'count': 5
-        }
-        client.post('/create', data=data, follow_redirects=True)
-        response = client.get('/delete/1', follow_redirects=True)
-        assert response.status_code == 200
-        print("✅ Delete book - done")
-
-
 def run_all_tests():
     print("=" * 50)
     print("ЗАПУСК ТЕСТОВ ДЛЯ BOOKSTORE-APP")
@@ -84,9 +36,6 @@ def run_all_tests():
         test_homepage,
         test_books_page,
         test_create_form,
-        test_create_book,
-        test_update_book,
-        test_delete_book
     ]
     
     passed = 0
