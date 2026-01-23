@@ -1,8 +1,18 @@
+.ssh_setup:
+  before_script:
+    - apk update && apk add openssh-client rsync bash
+    - eval "$(ssh-agent -s)"
+    - mkdir ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KEY" | ssh-add -
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
 stages:
   - app-lint
   - docker-lint
-  - test
   - build
+  - test
+  - prepare
   - deploy
   - notify
 
@@ -10,7 +20,7 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
-  TAG: ${CI_COMMIT_SHORT_SHA}
+  TAG: ""
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
@@ -18,6 +28,10 @@ variables:
   API_URL: https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
   TELEGRAM_CHAT_ID: 940670214
   TIMEOUT: 5
+  IMAGE_TAG: ${DOCKER_REPO}:${CI_PIPELINE_ID}
+  DB_USER: bookstoreuser
+  DB_NAME: bookstore
+  DB_HOST: db
 
 linter-app:job:
   stage: app-lint
@@ -59,22 +73,70 @@ build:job:
     entrypoint: [""]
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$TOKEN\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${DOCKER_REPO}:${TAG}
+    - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
   tags:
     - runner
+
+test:job:
+  stage: test
+  needs: ["build-image"]
+  image: ${IMAGE_TAG}
+  variables:
+    POSTGRES_DB: mydb
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_AUTH_METHOD: trust
+  services:
+    - name: postgres:16
+      alias: db
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - pytest -v --disable-warnings --maxfail=1 app/test_app.py | tee items-tests_${CI_PIPELINE_ID}.log
+  artifacts:
+    paths:
+      - items-tests_${CI_PIPELINE_ID}.log
+  tags:
+    - runner
+
+prepare:job:
+  stage: prepare
+  extends: .ssh_setup
+  script:
+    - |
+      ssh ${SSH_USER}@${HOST} "
+        test -d /var/www || sudo mkdir -p /var/www;
+        sudo chown -R gitlab-runner:gitlab-runner /var/www;
+        test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
+        cd ${PRJ_DIR};
+        git checkout main;
+        git pull;
+        cd ${PRJ_DIR};
+        if [ -f .env ]; then
+          sed -i '/^APP_IMAGE=/d' .env ;
+          echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
+        else
+          DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12);
+          {
+            echo "APP_IMAGE=${IMAGE_TAG}"
+            echo "DB_USER=${DB_USER}"
+            echo "DB_NAME=${DB_NAME}"
+            echo "DB_HOST=${DB_HOST}"
+            echo "DB_PASS=${DB_PASS}"
+          } > .env
+        fi
+      "
+  tags:
+    - runner
+
 
 deploy-compose:
   stage: deploy
   image: docker:28.5.1
   variables:
-    APP_IMAGE: ${DOCKER_REPO}:${TAG}
+    APP_IMAGE: ${IMAGE_TAG}
   before_script:
     - apk add gettext openssh
-    - eval $(ssh-agent -s)
-    - chmod 600 $SSH_KEY
-    - ssh-add $SSH_KEY
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
   script:
     - envsubst < compose.tmpl > compose.yml
     - |
