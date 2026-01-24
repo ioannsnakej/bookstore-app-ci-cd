@@ -79,7 +79,7 @@ test:job:
     - name: postgres:16
       alias: db
   before_script:
-    - pip install -r requirements.txt
+    - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 app/test_app.py | tee items-tests_${CI_PIPELINE_ID}.log
   artifacts:
