@@ -61,7 +61,7 @@ build:job:
     name: gcr.io/kaniko-project/executor:v1.9.0-debug
     entrypoint: [""]
   script:
-    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
   tags:
     - runner
