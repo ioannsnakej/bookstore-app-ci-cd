@@ -90,6 +90,7 @@ test:job:
 
 prepare:job:
   stage: prepare
+  image: alpine:latest
   extends: .ssh_setup
   script:
     - |
@@ -121,21 +122,11 @@ prepare:job:
 
 deploy-compose:
   stage: deploy
-  image: docker:28.5.1
-  variables:
-    APP_IMAGE: ${IMAGE_TAG}
-  before_script:
-    - apk add gettext openssh
+  extends: .ssh_setup
   script:
-    - envsubst < compose.tmpl > compose.yml
     - |
-      ssh ${SSH_OPT} ${SSH_USER}@${HOST} "
-        [ ! -d ${PRJ_DIR} ] && sudo mkdir -p ${PRJ_DIR} && sudo chown ${SSH_USER}:${SSH_USER} ${PRJ_DIR}
-      "
-    - scp SSH_OPT compose.yml ${SSH_USER}@${HOST}:${PRJ_DIR}
-    - |
-        ssh ${SSH_OPT} ${SSH_USER}@${HOST} "docker compose -f ${PRJ_DIR}/compose.yml up -d"
-  when: manual
+      ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
+      sudo docker compose up -d"
 
 notify-tg:
   stage: notify
