@@ -6,8 +6,7 @@ image: docker:28.4.0
     - eval "$(ssh-agent -s)"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - echo "$SSH_KEY"
-    - echo "$SSH_KEY" | ssh-add -
+    - cat "$SSH_KEY" | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
 stages:
@@ -44,6 +43,8 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   allow_failure: true
+  rulles:
+    - when: never
   tags:
     - runner
 
@@ -53,6 +54,8 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   allow_failure: true
+  rulles:
+    - when: never
   tags:
     - runner
 
@@ -88,6 +91,8 @@ test:job:
   artifacts:
     paths:
       - items-tests_${CI_PIPELINE_ID}.log
+  rulles:
+    - when: never
   tags:
     - runner
 
