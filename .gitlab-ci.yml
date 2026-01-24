@@ -67,8 +67,9 @@ build:job:
 test:job:
   stage: test
   needs: ["build:job"]
-  image: ${IMAGE_TAG}
-  entrypoint: [""] 
+  image: 
+    name: ${IMAGE_TAG}
+    entrypoint: [""] 
   variables:
     POSTGRES_DB: mydb
     POSTGRES_USER: postgres
