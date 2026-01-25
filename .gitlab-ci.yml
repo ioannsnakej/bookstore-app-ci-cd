@@ -43,6 +43,8 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   allow_failure: true
+  tags:
+    - runner
 
 linter-docker:job:
   stage: docker-lint
@@ -50,6 +52,8 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   allow_failure: true
+  tags:
+    - runner
 
 build:job:
   stage: build
@@ -59,6 +63,8 @@ build:job:
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
+  tags:
+    - runner
 
 test:job:
   stage: test
@@ -81,6 +87,8 @@ test:job:
   artifacts:
     paths:
       - items-tests_${CI_PIPELINE_ID}.log
+  tags:
+    - runner
 
 prepare:job:
   stage: prepare
@@ -109,6 +117,9 @@ prepare:job:
           } > .env
         fi
       "
+  tags:
+    - runner
+
 
 deploy-compose:
   stage: deploy
@@ -117,6 +128,8 @@ deploy-compose:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
       sudo docker compose up -d"
+  tags:
+    - runner
 
 notify-tg:
   stage: notify
@@ -126,3 +139,5 @@ notify-tg:
       export TEXT="Deploy Project: $CI_PROJECT_NAME%0ABranch: $CI_COMMIT_REF_NAME%0APipeline: $CI_PIPELINE_URL%0AUser: $GITLAB_USER_NAME"
   script:
     - curl -s --max-time $TIMEOUT -d "chat_id=$TELEGRAM_CHAT_ID&disable_web_page_preview=1&text=$TEXT" $URL > /dev/null
+  tags:
+    - runner
