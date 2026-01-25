@@ -83,10 +83,10 @@ test:job:
   before_script:
     - pip install -r ./app/requirements.txt
   script:
-    - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee items-tests_${CI_PIPELINE_ID}.log
+    - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   artifacts:
     paths:
-      - items-tests_${CI_PIPELINE_ID}.log
+      - bookstore-tests_${CI_PIPELINE_ID}.log
   tags:
     - runner
 
@@ -95,6 +95,11 @@ prepare:job:
   extends: .ssh_setup
   script:
     - |
+      if [ -f .env ] && grep 'DB_PASS' .env; then
+        DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
+      else
+        DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
+      fi
       ssh ${SSH_USER}@${HOST} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
@@ -103,11 +108,6 @@ prepare:job:
         git checkout main;
         git pull;
         cd ${PRJ_DIR};
-        if [ -f .env ] && grep 'DB_PASS' .env; then
-          DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
-        else
-          DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
-        fi
         {
           echo "APP_IMAGE=${IMAGE_TAG}"
           echo "DB_USER=${DB_USER}"
