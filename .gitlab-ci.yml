@@ -103,19 +103,18 @@ prepare:job:
         git checkout main;
         git pull;
         cd ${PRJ_DIR};
-        if [ -f .env ]; then
-          sed -i '/^APP_IMAGE=/d' .env ;
-          echo "APP_IMAGE=${IMAGE_TAG}" >> .env ;
+        if [ -f .env ] && grep 'DB_PASS' .env; then
+          DB_PASS=$(grep 'DB_PASS' .env | cut -d= -f2 | tr -d '\"')
         else
-          DB_PASS=\$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12);
-          {
-            echo "APP_IMAGE=${IMAGE_TAG}"
-            echo "DB_USER=${DB_USER}"
-            echo "DB_NAME=${DB_NAME}"
-            echo "DB_HOST=${DB_HOST}"
-            echo "DB_PASS=${DB_PASS}"
-          } > .env
+          DB_PASS=$(openssl rand -base64 9 | tr -dc 'A-Za-z0-9' | head -c12)
         fi
+        {
+          echo "APP_IMAGE=${IMAGE_TAG}"
+          echo "DB_USER=${DB_USER}"
+          echo "DB_NAME=${DB_NAME}"
+          echo "DB_HOST=${DB_HOST}"
+          echo "DB_PASS=${DB_PASS}"
+        } > .env
       "
   tags:
     - runner
