@@ -43,8 +43,6 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   allow_failure: true
-  rules:
-    - when: never
   tags:
     - runner
 
@@ -54,8 +52,6 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   allow_failure: true
-  rules:
-    - when: never
   tags:
     - runner
 
@@ -91,8 +87,6 @@ test:job:
   artifacts:
     paths:
       - items-tests_${CI_PIPELINE_ID}.log
-  rules:
-    - when: never
   tags:
     - runner
 
