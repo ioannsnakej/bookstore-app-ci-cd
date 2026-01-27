@@ -104,6 +104,7 @@ test:job:
     - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
+    - cat tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
     - if: '$DEPLOY_MODE == "deploy" && $RUN_TESTS == "true"'
   artifacts:
@@ -193,14 +194,7 @@ telegram_notify_success:
       export EMOJI="✅"
     fi
     
-    if [ "$DEPLOY_MODE" == "deploy" ] && [ -f "bookstore-tests_${CI_PIPELINE_ID}.log" ]; then
-      export TEST_RESULT=$(tail -8 "bookstore-tests_${CI_PIPELINE_ID}.log" | tr '\n' ' ' | sed 's/  */ /g')
-      export TEST_INFO="%0ATests: ${TEST_RESULT}"
-    else
-      export TEST_INFO=""
-    fi
-    
-    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME}%0AVersion: ${VERSION}${TEST_INFO}%0APipeline: ${CI_PIPELINE_URL}"
+    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME}%0AVersion: ${VERSION}%0APipeline: ${CI_PIPELINE_URL}"
   script:
     - |
       curl -s -X POST ${URL} \
