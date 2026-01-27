@@ -31,7 +31,7 @@ variables:
   TAG: ""
   RUN_TESTS: "true"
   DEPLOY_MODE: 
-    value: "deploy"
+    value: ""
     options:
       - "deploy"
       - "rollback"
