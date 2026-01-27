@@ -30,7 +30,12 @@ variables:
   DOCKER_USER: ivankhodyrev
   TAG: ""
   RUN_TESTS: "true"
-  DEPLOY_MODE: "deploy"
+  DEPLOY_MODE: 
+    value: "deploy"
+    options:
+      - "deploy"
+      - "rollback"
+    description: "Choose Deploy or Rollback"
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
