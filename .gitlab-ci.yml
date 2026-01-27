@@ -104,7 +104,7 @@ test:job:
     - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
-    - cat tee bookstore-tests_${CI_PIPELINE_ID}.log
+    - cat bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
     - if: '$DEPLOY_MODE == "deploy" && $RUN_TESTS == "true"'
   artifacts:
