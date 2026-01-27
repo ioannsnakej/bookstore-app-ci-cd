@@ -200,7 +200,7 @@ telegram_notify_success:
       export TEST_INFO=""
     fi
     
-    export TEXT="${EMOJI} ${MODE} for *${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}* by ${GITLAB_USER_NAME}\nVersion: ${VERSION}${TEST_INFO}%0APipeline: ${CI_PIPELINE_URL}"
+    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME}%0AVersion: ${VERSION}${TEST_INFO}%0APipeline: ${CI_PIPELINE_URL}"
   script:
     - |
       curl -s -X POST ${URL} \
@@ -226,7 +226,7 @@ telegram_notify_failure:
       export EMOJI="❌"
     fi
     
-    export TEXT="${EMOJI} ${MODE} for *${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}* by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}* :(\nJob: ${CI_JOB_NAME}\nPipeline: ${CI_PIPELINE_URL}"
+    export TEXT="${EMOJI} ${MODE} for ${CI_PROJECT_NAME} by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}* :(%0AJob: ${CI_JOB_NAME}%0APipeline: ${CI_PIPELINE_URL}"
   script:
     - |
       curl -s -X POST ${URL} \
