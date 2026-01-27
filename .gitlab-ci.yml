@@ -51,6 +51,8 @@ linter-app:job:
     - pip install pylint
   script:
     - pylint ./app/*.py
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -60,6 +62,8 @@ linter-docker:job:
   image: hadolint/hadolint:latest-debian
   script:
     - hadolint Dockerfile
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -72,8 +76,8 @@ build:job:
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
-  after_script:
-    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Build ${IMAGE_TAG} success" ${API_URL}
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
   tags:
     - runner
 
@@ -95,12 +99,6 @@ test:job:
     - pip install -r ./app/requirements.txt
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
-  after_script:
-    - |
-      RESULT=${cat bookstore-tests_${CI_PIPELINE_ID}.log}
-      curl -X POST \
-      -d chat_id=$TELEGRAM_CHAT_ID \
-      -d text="✅Test ${IMAGE_TAG} success. Result: ${RESULT}" ${API_URL}
   rules:
     - if: '$DEPLOY_MODE == "deploy" && $RUN_TESTS == "true"'
   artifacts:
@@ -149,8 +147,6 @@ deploy-compose:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
       sudo docker compose up -d"
-  after_script:
-    - curl -X POST -d chat_id=$TELEGRAM_CHAT_ID -d text="✅Deploy ${IMAGE_TAG} success" ${API_URL}
   rules:
      - if: '$DEPLOY_MODE == "deploy"'
      - if: '$CI_COMMIT_BRANCH == "main"'
@@ -176,18 +172,65 @@ rollback:
   tags:
     - runner
 
+telegram_notify_success:
+  stage: notify
+  image: curlimages/curl
+  before_script: |
+    export URL=${API_URL}
+    if [ "$DEPLOY_MODE" == "rollback" ]; then
+      export MODE="Rollback"
+      export VERSION="${DOCKER_REPO}:${TAG}"
+      export EMOJI="⬅️"
+    else
+      export MODE="Deploy"
+      export VERSION="${IMAGE_TAG}"
+      export EMOJI="✅"
+    fi
+    
+    if [ "$DEPLOY_MODE" == "deploy" ] && [ -f "bookstore-tests_${CI_PIPELINE_ID}.log" ]; then
+      export TEST_RESULT=$(tail -8 "bookstore-tests_${CI_PIPELINE_ID}.log" | tr '\n' ' ' | sed 's/  */ /g')
+      export TEST_INFO="%0ATests: ${TEST_RESULT}"
+    else
+      export TEST_INFO=""
+    fi
+    
+    export TEXT="${EMOJI} ${MODE} for *${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}* by ${GITLAB_USER_NAME}\nVersion: ${VERSION}${TEST_INFO}%0APipeline: ${CI_PIPELINE_URL}"
+  script:
+    - |
+      curl -s -X POST ${URL} \
+        -d chat_id=${TELEGRAM_CHAT_ID} \
+        -d text="${TEXT}" \
+        -d parse_mode=Markdown
+  when: on_success
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
+  tags:
+    - runner
+
 telegram_notify_failure:
   stage: notify
   image: curlimages/curl
   before_script: |
-      export URL=${API_URL}
-      export TEXT="Deploy Project: $CI_PROJECT_NAME%0ABranch: $CI_COMMIT_REF_NAME%0APipeline: $CI_PIPELINE_URL%0AUser: $GITLAB_USER_NAME"
+    export URL=${API_URL}
+    if [ "$DEPLOY_MODE" == "rollback" ]; then
+      export MODE="Rollback"
+      export EMOJI="⬅️"
+    else
+      export MODE="Deploy"
+      export EMOJI="❌"
+    fi
+    
+    export TEXT="${EMOJI} ${MODE} for *${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}* by ${GITLAB_USER_NAME} failed on branch *${CI_COMMIT_BRANCH}* :(\nJob: ${CI_JOB_NAME}\nPipeline: ${CI_PIPELINE_URL}"
   script:
     - |
-      curl -s -X POST https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage \
-      -d chat_id=${TELEGRAM_CHAT_ID} \
-      -d text="❌ Build and push for *$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME* by $GITLAB_USER_NAME failed on branch *$CI_COMMIT_BRANCH* :( [Check logs]($CI_PIPELINE_URL)" \
-      -d parse_mode=Markdown
+      curl -s -X POST ${URL} \
+        -d chat_id=${TELEGRAM_CHAT_ID} \
+        -d text="${TEXT}" \
+        -d parse_mode=Markdown
   when: on_failure
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner
