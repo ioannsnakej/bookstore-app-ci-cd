@@ -1,11 +1,12 @@
-image: docker:28.4.0
-
 spec:
   inputs:
     mode:
       description: "Choose DEPLOY_MODE: deploy or rollback"
       type: string
       default: "deploy"
+---
+
+image: docker:28.4.0
 
 workflow:
   rules:
