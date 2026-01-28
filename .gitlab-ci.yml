@@ -4,6 +4,15 @@ spec:
       description: "Choose DEPLOY_MODE: deploy or rollback"
       type: string
       default: "deploy"
+      options: ["deploy", "rollback"]
+    tag:
+      description: "Give me tag for rollback"
+      type: string
+      default: ""
+    tests:
+      description: "Run tests?"
+      type: boolean
+      default: true
 ---
 
 image: docker:28.4.0
@@ -36,8 +45,8 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
-  TAG: ""
-  RUN_TESTS: "true"
+  TAG: $[[ inputs.tag ]]
+  RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
