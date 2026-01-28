@@ -19,20 +19,13 @@ image: docker:28.4.0
 
 workflow:
   rules:
-    - if: '$CI_PIPELINA_SOURCE == "web"'
-      variables:
-        TAG: $[[ inputs.tag ]]
-        RUN_TESTS: $[[ inputs.tests ]]
-        DEPLOY_MODE: $[[ inputs.mode ]]
-    - if: '$CI_COMMIT_BRANCH == "main" $$ $CI_PIPELINA_SOURCE == "push"'
-      variables:
-        DEPLOY_MODE: "deploy"
-        RUN_TESTS: "true"
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
     - when: never
 
 .ssh_setup:
   before_script:
-    - apk update && apk add openssh-client rsync bash
+    - apk update && apk add openssh-client rsync bash --no-cache
     - eval "$(ssh-agent -s)"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
@@ -52,6 +45,9 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
+  TAG: $[[ inputs.tag ]]
+  RUN_TESTS: $[[ inputs.tests ]]
+  DEPLOY_MODE: $[[ inputs.mode ]]
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
