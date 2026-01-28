@@ -1,5 +1,12 @@
 image: docker:28.4.0
 
+spec:
+  inputs:
+    mode:
+      description: "Choose DEPLOY_MODE: deploy or rollback"
+      type: string
+      default: "deploy"
+
 workflow:
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
@@ -30,12 +37,7 @@ variables:
   DOCKER_USER: ivankhodyrev
   TAG: ""
   RUN_TESTS: "true"
-  DEPLOY_MODE: 
-    value: "deploy"
-    options:
-      - "deploy"
-      - "rollback"
-    description: "Choose Deploy or Rollback"
+  DEPLOY_MODE: $[[ inputs.mode ]]
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   HOST: 192.168.56.6
