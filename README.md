@@ -58,3 +58,18 @@ curl http://localhost:8000/delete/23
 - `db_password` - пароль пользователя `db_user`
 и запускает проект с помощью docker compose
 
+## GitlabCI
+Для основной раскатки приложения на новой машине выбран инструмент GitlabCI:
+- ./deployment/.gitlab-ci.yml
+
+### .gitlab-ci,yml
+Собирает образ, тестирует его и деплоит. Так же релизована функция роллбэка.
+- `linter-app:job` - джоба для проверки кода приложения linter`ом
+- `linter-docker:job` - джоба для проверки Dockerfile linter`ом
+- `build:job` - джоба сборки image и дальнейшего пуша его в dockerhub
+- `test:job` - джоба тестирования собранного image
+- `prepare:job` - джоба подготовки рабочей дериктории проекта и файла `.env` на целевой машине для дальнейшего deploy
+- `deploy-compose:job` - джоба для деплоя приложения  на целевой машине
+- `rollback:job` - джоба для отката приложения на целевой машине к версии image с указанным TAG
+- `telegram_notify_success:job` - джоба уведомления от телеграм-бота об успешной сборке
+- `telegram_notify_failure:job` - джоба уведомления от телеграм-бота о неуспешной сборке
