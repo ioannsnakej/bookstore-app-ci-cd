@@ -1,6 +1,7 @@
 # Bookstore-app
 Простое CRUD-приложение (create,read,update,delete) со статикой в виде html-страниц + css, которое выводит на экран список книг, позволяет добавить книгу, редактировать книгу, удалить книгу.
 
+![notify](/attachments/app.png)
 
 
  ## Требования
@@ -73,3 +74,12 @@ curl http://localhost:8000/delete/23
 - `rollback:job` - джоба для отката приложения на целевой машине к версии image с указанным TAG
 - `telegram_notify_success:job` - джоба уведомления от телеграм-бота об успешной сборке
 - `telegram_notify_failure:job` - джоба уведомления от телеграм-бота о неуспешной сборке
+
+Запуск при push:
+![notify](/attachments/fullbuilddeploy.png)
+Ручной запуск с параметром `RUN_TESTS: false` :
+![notify](/attachments/tests_off.png)
+Ручной запуск с параметром `DEPLOY_MODE: rollback` и `TAG: 2288334743`
+![notify](/attachments/rollback.png)
+Уведомления от телеграм-бота
+![notify](/attachments/notify_tg.png)
