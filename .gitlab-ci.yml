@@ -24,7 +24,7 @@ linter:job:
       cd ${DIR}
       terraform init \
       -backend-config="access_key=$YC_ACCESS_KEY" \
-      -backend-config="secret_key=$YC_SECRET_ACCESS"
+      -backend-config="secret_key=$YC_SECRET_KEY"
       tflint
       terraform fmt -recursive
   allow_failure: true
@@ -53,7 +53,7 @@ plan:job:
       cd ${DIR}
       terraform init \
       -backend-config="access_key=$YC_ACCESS_KEY" \
-      -backend-config="secret_key=$YC_SECRET_ACCESS"
+      -backend-config="secret_key=$YC_SECRET_KEY"
       terraform plan -out=${PLAN_FILE}
   artifacts:
     paths:
@@ -74,7 +74,7 @@ apply:job:
       cd ${DIR}
       terraform init \
       -backend-config="access_key=$YC_ACCESS_KEY" \
-      -backend-config="secret_key=$YC_SECRET_ACCESS"
+      -backend-config="secret_key=$YC_SECRET_KEY"
       terraform apply -auto-approve ${DIR}/${PLAN_FILE}
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
