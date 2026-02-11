@@ -22,9 +22,7 @@ linter:job:
   script:
     - |
       cd ${DIR}
-      terraform init \
-      -backend-config="access_key=$YC_ACCESS_KEY" \
-      -backend-config="secret_key=$YC_SECRET_KEY"
+      terraform init -backend=false
       tflint
       terraform fmt -recursive
   allow_failure: true
@@ -37,9 +35,10 @@ linter:job:
 validate:job:
   stage: validate
   script:
-    - cd ${DIR}
-    - terraform init
-    - terraform validate
+    - | 
+      cd ${DIR}
+      terraform init -backend=false
+      terraform validate
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
