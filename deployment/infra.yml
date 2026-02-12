@@ -42,10 +42,11 @@ stages:
   - validate
   - plan
   - apply
+  - destroy
 
 variables:
   DIR: "terraform"
-  PLAN_FILE: "deploy.tfplan-${CI_COMMIT_SHORT_SHA}"
+  PLAN_FILE: "tfplan-${CI_COMMIT_SHORT_SHA}"
   API_URL: "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
   TF_VAR_yc_token: $YC_TOKEN
   TF_VAR_folder_id: $YC_FOLDER_ID
@@ -63,8 +64,7 @@ linter:job:
     - tflint
   allow_failure: true
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"        
+    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'       
   tags:
     - runner
 
@@ -76,8 +76,7 @@ validate:job:
   script:
     - terraform -chdir=$DIR validate
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'  
   tags:
     - runner
 
@@ -96,8 +95,7 @@ plan:job:
       - .terraform.lock.hcl
     expire_in: 1 hour
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'  
   tags:
     - runner
 
@@ -111,8 +109,27 @@ apply:job:
     - *yc-init
   script:
     - terraform -chdir=$DIR apply -input=false ${PLAN_FILE}
+    - terraform output -raw instance_ip > ../instance_ip.txt
+  artifacts:
+    paths:
+      - ${DIR}/instance_ip.txt
+  when: manual
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual      
+    - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'       
+  tags:
+    - runner
+
+destroy:job:
+  stage: destroy
+  before_script:
+    - apk update && apk add ansible coreutils bash curl
+    - *ssh_setup
+    - *terraform-init
+    - *yc-init
+  script:
+    - terraform destroy -auto-approve
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /\[destroy\]/'  
   tags:
     - runner

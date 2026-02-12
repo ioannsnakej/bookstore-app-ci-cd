@@ -1,27 +1,4 @@
-spec:
-  inputs:
-    mode:
-      description: "Choose DEPLOY_MODE: deploy or rollback"
-      type: string
-      default: "deploy"
-      options: ["deploy", "rollback"]
-    tag:
-      description: "Give me tag for rollback"
-      type: string
-      default: ""
-    tests:
-      description: "Run tests?"
-      type: boolean
-      default: true
----
-
 image: docker:28.4.0
-
-workflow:
-  rules:
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
-    - when: never
 
 .ssh_setup:
   before_script:
@@ -45,12 +22,8 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
-  TAG: $[[ inputs.tag ]]
-  RUN_TESTS: $[[ inputs.tests ]]
-  DEPLOY_MODE: $[[ inputs.mode ]]
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
-  HOST: 192.168.56.6
   PRJ_DIR: /var/www/bookstore-app
   GIT_URL: https://gitlab.com/khodyrev-ivan/diplom.git
   API_URL: https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
@@ -128,6 +101,8 @@ test:job:
 prepare:job:
   stage: prepare
   extends: .ssh_setup
+  before_script:
+    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
       ssh ${SSH_USER}@${HOST} "
@@ -156,7 +131,11 @@ deploy-compose:job:
   needs: 
     - job: prepare:job
       optional: true
+    - job: apply:job
+      artifacts: true
   extends: .ssh_setup
+  before_script:
+    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
@@ -170,6 +149,8 @@ deploy-compose:job:
 rollback:job:
   stage: rollback
   extends: .ssh_setup
+  before_script:
+    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
       ssh ${SSH_USER}@${HOST} "

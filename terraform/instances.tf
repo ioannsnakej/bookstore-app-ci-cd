@@ -25,6 +25,11 @@ resource "yandex_compute_instance" "bookstore-app" {
     user-data = "${file("./users.txt")}"
   }
 
+  output "instance_ip" {
+    value = yandex_compute_instance.bookstore-app.network_interface.0.nat_ip_address
+    description = "Public IP of bookstore-app VM"
+  }
+
   connection {
     host        = self.network_interface.0.nat_ip_address
     user        = "gitlab-runner"
