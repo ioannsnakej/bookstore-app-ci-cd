@@ -89,7 +89,7 @@ plan:job:
 
 apply:job:
   stage: apply
-  dependencies: ["plan"]
+  dependencies: ["plan:job"]
   before_script:
     - apk update && apk add ansible coreutils bash curl
     - *ssh_setup
