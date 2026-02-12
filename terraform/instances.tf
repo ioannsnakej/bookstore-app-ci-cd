@@ -37,6 +37,6 @@ resource "yandex_compute_instance" "bookstore-app" {
   }
 
   provisioner "local-exec" {
-    command = "cd ../ansible && ansible-playbook -i '${self.network_interface.0.nat_ip_address},' playbooks/playbook.yml"
+    command = "cd ../ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i '${self.network_interface.0.nat_ip_address},' playbooks/playbook.yml"
   }
 }
