@@ -5,14 +5,13 @@ image:
     - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 .ssh_setup: &ssh_setup
-  before_script:
-    - apk update && apk add openssh-client rsync bash --no-cache
-    - eval "$(ssh-agent -s)"
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - cat $SSH_KEY > ~/.ssh/id_ed25519
-    - chmod 600 ~/.ssh/id_ed25519
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  - apk update && apk add openssh-client rsync bash --no-cache
+  - eval "$(ssh-agent -s)"
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - cat $SSH_KEY > ~/.ssh/id_ed25519
+  - chmod 600 ~/.ssh/id_ed25519
+  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
 .terraform-init: &terraform-init
   - terraform version
