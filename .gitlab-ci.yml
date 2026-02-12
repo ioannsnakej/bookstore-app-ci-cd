@@ -20,13 +20,13 @@ stages:
   - validate
   - plan
   - apply
-  - deploy
+  - destroy
   - lint-app
   - build
   - test
   - prepare
+  - deploy
   - rollback
-  - destroy
   - notify
 
 workflow:
