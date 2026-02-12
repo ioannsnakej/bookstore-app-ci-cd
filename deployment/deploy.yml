@@ -122,8 +122,6 @@ deploy-compose:job:
   needs: 
     - job: prepare:job
       optional: true
-    - job: apply:job
-      artifacts: true
   extends: .ssh_setup
   before_script:
     - export HOST=$(cat terraform/instance_ip.txt)
