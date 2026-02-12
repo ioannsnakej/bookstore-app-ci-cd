@@ -20,6 +20,7 @@ stages:
   - validate
   - plan
   - apply
+  - run-deploy
   - lint-app
   - build
   - test
