@@ -116,3 +116,21 @@ apply:job:
       when: manual      
   tags:
     - runner
+
+destroy:job:
+  stage: destroy
+  before_script:
+    - apk update && apk add ansible coreutils bash curl
+    - *ssh_setup
+    - *terraform-init
+    - *yc-init
+  script:
+    - terraform destroy -auto-approve
+  when: manual
+  only:
+    - main
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE !~ /#destroy/
+  tags:
+    - runner
