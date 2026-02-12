@@ -9,15 +9,6 @@ image: docker:28.4.0
     - cat "$SSH_KEY" | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
-stages:
-  - lint
-  - build
-  - test
-  - prepare
-  - deploy
-  - rollback
-  - notify
-
 variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
@@ -34,7 +25,7 @@ variables:
   DB_HOST: bookstore-db
 
 linter-app:job:
-  stage: lint
+  stage: lint-app
   image: python:3.12-slim
   before_script:
     - pip install pylint
@@ -47,7 +38,7 @@ linter-app:job:
     - runner
 
 linter-docker:job:
-  stage: lint
+  stage: lint-app
   image: hadolint/hadolint:latest-debian
   script:
     - hadolint Dockerfile

@@ -14,6 +14,21 @@ spec:
       type: boolean
       default: true
 ---
+
+stages:
+  - lint-tf
+  - validate
+  - plan
+  - apply
+  - deploy
+  - lint-app
+  - build
+  - test
+  - prepare
+  - rollback
+  - destroy
+  - notify
+
 workflow:
   rules:
     - if: '$CI_COMMIT_MESSAGE =~ /\[infra\]/'

@@ -37,13 +37,6 @@ image:
   - yc config set service-account-key sa-key.json
   - export YC_TOKEN=$(yc iam create-token)
 
-stages:
-  - linting
-  - validate
-  - plan
-  - apply
-  - destroy
-
 variables:
   DIR: "terraform"
   PLAN_FILE: "tfplan-${CI_COMMIT_SHORT_SHA}"
@@ -52,7 +45,7 @@ variables:
   TF_VAR_folder_id: $YC_FOLDER_ID
 
 linter:job:
-  stage: linting
+  stage: lint-tf
   image:
     name: ghcr.io/terraform-linters/tflint
     entrypoint:
