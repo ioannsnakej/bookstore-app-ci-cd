@@ -15,7 +15,18 @@ image:
 
 .terraform-init: &terraform-init
   - terraform version
-  - cat $terraformrc > ~/.terraformrc
+  - |
+    cat > ~/.terraformrc << 'EOF'
+    provider_installation {
+      network_mirror {
+        url = "https://terraform-mirror.yandexcloud.net/"
+        include = ["registry.terraform.io/*/*"]
+      }
+      direct {
+        exclude = ["registry.terraform.io/*/*"]
+      }
+    }
+    EOF
   - terraform -chdir=$DIR init -backend-config="access_key=$YC_ACCESS_KEY" -backend-config="secret_key=$YC_SECRET_KEY"
 
 
