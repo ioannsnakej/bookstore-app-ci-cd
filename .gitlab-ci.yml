@@ -20,7 +20,6 @@ stages:
   - validate
   - plan
   - apply
-  - destroy
   - lint-app
   - build
   - test
@@ -35,23 +34,22 @@ workflow:
       variables:
         PIPELINE_TYPE: "infra"
         DEPLOY_MODE: ""
-    - if: '$CI_COMMIT_MESSAGE =~ /\[destroy\]/'
-      variables:
-        PIPELINE_TYPE: "destroy"
-        DEPLOY_MODE: ""
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE !~ /\[infra\]/ && $CI_COMMIT_MESSAGE !~ /\[destroy\]/'
+      variables:
+        PIPELINE_TYPE: "deploy"
+        DEPLOY_MODE: "deploy"
+    - if: '$CI_PIPELINE_SOURCE == "web" && $DEPLOY_MODE == "deploy"'
       variables:
         PIPELINE_TYPE: "deploy"
         DEPLOY_MODE: "deploy"
     - if: '$DEPLOY_MODE == "deploy"'
       variables:
         PIPELINE_TYPE: "deploy"
-    - if: '$DEPLOY_MODE == "rollback"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $DEPLOY_MODE == "rollback"'
       variables:
         PIPELINE_TYPE: "rollback"
         DEPLOY_MODE: "rollback"
     - when: never
-
 
 variables:
   TAG: $[[ inputs.tag ]]
