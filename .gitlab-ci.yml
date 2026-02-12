@@ -29,7 +29,13 @@ image:
     EOF
   - terraform -chdir=$DIR init -backend-config="access_key=$YC_ACCESS_KEY" -backend-config="secret_key=$YC_SECRET_KEY"
 
-
+.yc-init: &yc-init
+  - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i ./ -n 
+  - cp ./bin/yc /usr/bin
+  - yc config profile create sa-tf
+  - echo "$SA_KEY" > sa-key.json
+  - yc config set service-account-key sa-key.json
+  - export YC_TOKEN=$(yc iam create-token)
 
 stages:
   - linting
@@ -83,8 +89,7 @@ plan:job:
     - apk update && apk add ansible coreutils bash curl
     - *ssh_setup
     - *terraform-init
-    - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i ./ -n 
-    - cp ./bin/yc /usr/bin
+    - *yc-init
   script:
     - terraform -chdir=$DIR plan -out ${PLAN_FILE}
   artifacts:
@@ -105,8 +110,7 @@ apply:job:
     - apk update && apk add ansible coreutils bash curl
     - *ssh_setup
     - *terraform-init
-    - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i ./ -n 
-    - cp ./bin/yc /usr/binL}
+    - *yc-init
   script:
     - terraform -chdir=$DIR apply -input=false ${PLAN_FILE}
   rules:
