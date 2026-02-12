@@ -128,5 +128,7 @@ trigger:deploy:
       - local: 'deployment/deploy.yml'
   variables:
     HOST: $PUB_IP
+    PIPELINE_TYPE: "deploy"
+    DEPLOY_MODE: "deploy"
   rules:
     - when: on_success
