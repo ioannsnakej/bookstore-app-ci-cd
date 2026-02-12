@@ -1,6 +1,9 @@
 image:
   name: hashicorp/terraform:1.6
-  entrypoint: [""]
+  entrypoint:
+    - "/usr/bin/env"
+    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 
 stages:
   - linting
@@ -19,6 +22,9 @@ linter:job:
   stage: linting
   image:
     name: ghcr.io/terraform-linters/tflint
+    entrypoint:
+    - "/usr/bin/env"
+    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   script:
     - |
       cd ${DIR}
