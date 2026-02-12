@@ -27,7 +27,7 @@ resource "yandex_compute_instance" "bookstore-app" {
 
   connection {
     host        = self.network_interface.0.nat_ip_address
-    user        = "ivan"
+    user        = "gitlab-runner"
     private_key = file("~/.ssh/id_ed25519")
     timeout     = "5m"
   }
