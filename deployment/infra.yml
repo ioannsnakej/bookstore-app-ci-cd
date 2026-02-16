@@ -158,5 +158,3 @@ trigger-deploy:job:
     HOST: $PUB_IP
   rules:
     - if: '$MODE == "apply"'
-  tags:
-    - runner
