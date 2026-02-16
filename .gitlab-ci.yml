@@ -6,7 +6,7 @@ spec:
       default: ""
       options: ["deploy", "rollback"]
     infra_mode:
-      description: "Choose DEPLOY_MODE: deploy or rollback"
+      description: "Choose INFRA_MODE: apply or destroy"
       type: string
       default: ""
       options: ["apply", "destroy"]
