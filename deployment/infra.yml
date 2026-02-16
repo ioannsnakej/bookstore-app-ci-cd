@@ -165,6 +165,5 @@ trigger-deploy:job:
       - local: 'deployment/deploy.yml'
   variables:
     HOST: $PUB_IP
-    MODE: "deploy"
   rules:
     - if: '$MODE == "apply"'
