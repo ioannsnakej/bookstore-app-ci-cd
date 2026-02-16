@@ -82,10 +82,10 @@ validate:job:
 plan:job:
   stage: plan
   image:
-  name: hashicorp/terraform:1.6
-  entrypoint:
-    - "/usr/bin/env"
-    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    name: hashicorp/terraform:1.6
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   before_script:
     - apk update && apk add ansible coreutils bash curl
     - *terraform-init
@@ -107,10 +107,10 @@ plan:job:
 apply:job:
   stage: apply
   image:
-  name: hashicorp/terraform:1.6
-  entrypoint:
-    - "/usr/bin/env"
-    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    name: hashicorp/terraform:1.6
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   before_script:
     - apk update && apk add ansible coreutils bash curl
     - *ssh_setup
@@ -139,10 +139,10 @@ apply:job:
 destroy:job:
   stage: destroy
   image:
-  name: hashicorp/terraform:1.6
-  entrypoint:
-    - "/usr/bin/env"
-    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    name: hashicorp/terraform:1.6
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   before_script:
     - apk update && apk add curl bash --no-cache
     - *terraform-init
