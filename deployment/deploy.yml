@@ -102,6 +102,7 @@ prepare:job:
   extends: .ssh_setup
   script:
     - |
+      cat ${PUB_IP}
       ssh ${SSH_USER}@${PUB_IP} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
