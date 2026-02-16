@@ -21,6 +21,16 @@ image:
     EOF
   - terraform -chdir=$TF_ROOT init -backend-config="access_key=$YC_ACCESS_KEY" -backend-config="secret_key=$YC_SECRET_KEY"
 
+.ssh_setup: &ssh_setup
+  - apk update && apk add openssh-client rsync bash --no-cache
+  - eval "$(ssh-agent -s)"
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - cat $SSH_KEY > ~/.ssh/id_ed25519
+  - chmod 600 ~/.ssh/id_ed25519
+  - ssh-add ~/.ssh/id_ed25519 
+  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
 .notify: &notify
   - |
     if [ "$CI_JOB_STATUS" == "success" ]; then
@@ -42,6 +52,7 @@ stages:
   - plan
   - apply
   - destroy
+  - run-deploy
 
 variables:
   TF_ROOT: "terraform"
@@ -135,5 +146,18 @@ destroy:job:
   rules:
     - if: '$MODE == "destroy"' 
       when: manual
+  tags:
+    - runner
+
+trigger-deploy:job:
+  stage: run-deploy
+  dependencies: ["apply:job"]
+  trigger:
+    include:
+      - local: 'deployment/deploy.yml'
+  variables:
+    HOST: $PUB_IP
+  rules:
+    - if: '$MODE == "apply"'
   tags:
     - runner
