@@ -30,7 +30,7 @@ linter-app:job:
   script:
     - pylint ./app/*.py
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -41,7 +41,7 @@ linter-docker:job:
   script:
     - hadolint Dockerfile
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
   allow_failure: true
   tags:
     - runner
@@ -55,7 +55,7 @@ build:job:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
   tags:
     - runner
 
@@ -80,7 +80,7 @@ test:job:
   script:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -91,11 +91,9 @@ prepare:job:
   stage: prepare
   image: docker:28.4.0
   extends: .ssh_setup
-  before_script:
-    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "
+      ssh ${SSH_USER}@${PUB_IP} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
         test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
@@ -111,7 +109,7 @@ prepare:job:
         grep -q '^DB_HOST=' .env || echo "DB_HOST=${DB_HOST}" >> .env ;
       "
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
   tags:
     - runner
 
@@ -122,15 +120,13 @@ deploy-compose:job:
     - job: prepare:job
       optional: true
   extends: .ssh_setup
-  before_script:
-    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
+      ssh ${SSH_USER}@${PUB_IP} "cd ${PRJ_DIR}; 
       sudo docker compose pull;
       sudo docker compose up -d"
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$MODE == "deploy"'
       when: manual
   tags:
     - runner
@@ -139,11 +135,9 @@ rollback:job:
   stage: rollback
   image: docker:28.4.0
   extends: .ssh_setup
-  before_script:
-    - export HOST=$(cat terraform/instance_ip.txt)
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "
+      ssh ${SSH_USER}@${PUB_IP} "
         if [ -z "${TAG}" ]; then
           echo "TAG is missing. Usage: TAG for rollback"
           exit
@@ -155,7 +149,7 @@ rollback:job:
         docker compose up -d --force-recreate
       "
   rules:
-    - if: '$DEPLOY_MODE == "rollback"'
+    - if: '$MODE == "rollback"'
       when: manual
     - when: never
   tags:
@@ -185,8 +179,8 @@ telegram_notify_success:job:
         -d parse_mode=Markdown
   when: on_success
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
+    - if: '$MODE == "deploy"'
+    - if: '$MODE == "rollback"'
   tags:
     - runner
 
@@ -211,7 +205,7 @@ telegram_notify_failure:job:
         -d text="${TEXT}" \
   when: on_failure
   rules:
-    - if: '$DEPLOY_MODE == "deploy"'
-    - if: '$DEPLOY_MODE == "rollback"'
+    - if: '$MODE == "deploy"'
+    - if: '$MODE == "rollback"'
   tags:
     - runner

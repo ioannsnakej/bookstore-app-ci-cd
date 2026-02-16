@@ -58,7 +58,7 @@ linter:job:
     - tflint
   allow_failure: true
   rules:
-    - if: '$INFRA_MODE == "apply"'    
+    - if: '$MODE == "apply"'    
   tags:
     - runner
 
@@ -74,7 +74,7 @@ validate:job:
   script:
     - terraform -chdir=$TF_ROOT validate
   rules:
-    - if: '$INFRA_MODE == "apply"'
+    - if: '$MODE == "apply"'
   tags:
     - runner
 
@@ -99,7 +99,7 @@ plan:job:
       - ${TF_ROOT}/${PLAN_FILE}
     expire_in: 1 hour
   rules:
-    - if: '$INFRA_MODE == "apply"' 
+    - if: '$MODE == "apply"' 
   tags:
     - runner
 
@@ -119,18 +119,22 @@ apply:job:
   script:
     - terraform -chdir=$TF_ROOT apply -input=false ${PLAN_FILE}
     - terraform -chdir=$TF_ROOT output -raw instance_ip > instance_ip.txt
-    - echo "PUB_IP=$(cat instance_ip.txt)" > deploy.env
+    - echo "PUB_IP=$(cat instance_ip.txt)"
+    - |
+      curl --request PUT --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/variables/PUB_IP" \
+        --form "value=${PUB_IP}" || \
+      curl --request POST --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/variables" \
+        --form "key=PUB_IP" --form "value=${PUB_IP}"
   artifacts:
     paths:
       - instance_ip.txt
-    reports:
-      dotenv:
-        - deploy.env
   after_script:
     - PUB_IP=$(cat instance_ip.txt)
     - *notify
   rules:
-    - if: '$INFRA_MODE == "apply"'
+    - if: '$MODE == "apply"'
       when: manual      
   tags:
     - runner
@@ -152,7 +156,7 @@ destroy:job:
   after_script:
     - *notify
   rules:
-    - if: '$INFRA_MODE == "destroy"' 
+    - if: '$MODE == "destroy"' 
       when: manual
   tags:
     - runner
@@ -163,7 +167,6 @@ trigger-deploy:job:
     include:
       - local: 'deployment/deploy.yml'
   variables:
-    HOST: $PUB_IP
-    DEPLOY_MODE: "deploy"
+    MODE: "deploy"
   rules:
-    - if: '$INFRA_MODE == "apply"'
+    - if: '$MODE == "deploy"'

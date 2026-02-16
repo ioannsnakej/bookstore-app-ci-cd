@@ -1,15 +1,10 @@
 spec:
   inputs:
-    deploy_mode:
-      description: "Choose DEPLOY_MODE: deploy or rollback"
+    mode:
+      description: "Choose MODE: apply or destroy/deploy or rollback"
       type: string
       default: ""
-      options: ["deploy", "rollback"]
-    infra_mode:
-      description: "Choose INFRA_MODE: apply or destroy"
-      type: string
-      default: ""
-      options: ["apply", "destroy"]
+      options: ["deploy", "rollback", "apply", "destroy"]
     tag:
       description: "Give me tag for rollback"
       type: string
@@ -33,8 +28,7 @@ stages:
 
 variables:
   TAG: $[[ inputs.tag ]]
-  DEPLOY_MODE: $[[ inputs.deploy_mode ]]
-  INFRA_MODE: $[[ inputs.infra_mode ]]
+  MODE: $[[ inputs.mode ]]
 
 include:
   - local: 'deployment/infra.yml'
