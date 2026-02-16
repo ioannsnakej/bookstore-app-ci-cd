@@ -151,7 +151,6 @@ destroy:job:
 
 trigger-deploy:job:
   stage: run-deploy
-  dependencies: ["apply:job"]
   trigger:
     include:
       - local: 'deployment/deploy.yml'
