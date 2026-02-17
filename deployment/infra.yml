@@ -172,4 +172,4 @@ trigger-deploy:job:
     MODE: "deploy"
     PUB_IP: ${PUB_IP}
   rules:
-    - if: '$MODE == "apply"'
+    - if: '$MODE == "deploy"'
