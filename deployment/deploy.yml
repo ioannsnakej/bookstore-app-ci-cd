@@ -1,3 +1,29 @@
+spec:
+  inputs:
+    mode:
+      description: "Choose DEPLOY_MODE: deploy or rollback"
+      type: string
+      default: "deploy"
+      options: ["deploy", "rollback"]
+    tag:
+      description: "Give me tag for rollback"
+      type: string
+      default: ""
+    tests:
+      description: "Run tests?"
+      type: boolean
+      default: true
+---
+
+image: docker:28.4.0
+
+workflow:
+  rules:
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
+    - when: never
+
+
 .ssh_setup:
   before_script:
     - apk update && apk add openssh-client rsync bash
@@ -8,7 +34,7 @@
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
 stages:
-  - lint-app
+  - lint
   - build
   - test
   - prepare
@@ -20,6 +46,9 @@ variables:
   REGISTRY: https://index.docker.io/v1/
   DOCKER_REPO: ivankhodyrev/bookstore-app
   DOCKER_USER: ivankhodyrev
+  TAG: $[[ inputs.tag ]]
+  RUN_TESTS: $[[ inputs.tests ]]
+  DEPLOY_MODE: $[[ inputs.mode ]]
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   PRJ_DIR: /var/www/bookstore-app
@@ -31,10 +60,9 @@ variables:
   DB_NAME: bookstore
   DB_HOST: bookstore-db
   PUB_IP: ${PUB_IP}
-  DEPLOY_MODE: ${MODE}
 
 linter-app:job:
-  stage: lint-app
+  stage: lint
   image: python:3.12-slim
   before_script:
     - pip install pylint
@@ -47,7 +75,7 @@ linter-app:job:
     - runner
 
 linter-docker:job:
-  stage: lint-app
+  stage: lint
   image: hadolint/hadolint:latest-debian
   script:
     - hadolint Dockerfile
@@ -100,13 +128,10 @@ test:job:
 
 prepare:job:
   stage: prepare
-  image: docker:28.4.0
   extends: .ssh_setup
-  before_script:
-    - export PUB_IP=${PUB_IP}
   script:
     - |
-      ssh ${SSH_USER}@${PUB_IP} "
+      ssh ${SSH_USER}@${HOST} "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
         test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
@@ -128,16 +153,13 @@ prepare:job:
 
 deploy-compose:job:
   stage: deploy
-  image: docker:28.4.0
   needs: 
     - job: prepare:job
       optional: true
   extends: .ssh_setup
-  before_script:
-    - export PUB_IP=${PUB_IP}
   script:
     - |
-      ssh ${SSH_USER}@${PUB_IP} "cd ${PRJ_DIR}; 
+      ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
       sudo docker compose pull;
       sudo docker compose up -d"
   rules:
@@ -148,13 +170,10 @@ deploy-compose:job:
 
 rollback:job:
   stage: rollback
-  image: docker:28.4.0
   extends: .ssh_setup
-  before_script:
-    - export PUB_IP=${PUB_IP}
   script:
     - |
-      ssh ${SSH_USER}@${PUB_IP} "
+      ssh ${SSH_USER}@${HOST} "
         if [ -z "${TAG}" ]; then
           echo "TAG is missing. Usage: TAG for rollback"
           exit
