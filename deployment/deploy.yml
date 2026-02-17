@@ -196,8 +196,8 @@ telegram_notify_success:job:
         -d parse_mode=Markdown
   when: on_success
   rules:
-    - if: '$MODE == "deploy"'
-    - if: '$MODE == "rollback"'
+    - if: '$DEPLOY_MODE == "deploy"'
+    - if: '$DEPLOY_MODE == "rollback"'
   tags:
     - runner
 
