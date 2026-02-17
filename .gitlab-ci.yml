@@ -49,6 +49,7 @@ variables:
   TAG: $[[ inputs.tag ]]
   RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
+  HOST: 89.169.176.247
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   PRJ_DIR: /var/www/bookstore-app
