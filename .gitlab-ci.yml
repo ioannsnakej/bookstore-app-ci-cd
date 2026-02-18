@@ -174,16 +174,16 @@ rollback:job:
   extends: .ssh_setup
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "
-        if [ -z "${TAG}" ]; then
+      if [ -z "${TAG}" ]; then
           echo "TAG is missing. Usage: TAG for rollback"
           exit 1
-        fi
+      fi
+      ssh ${SSH_USER}@${HOST} "
         cd ${PRJ_DIR}; 
         test -f .env || touch .env
         sed -i '/^APP_IMAGE=/d' .env
         echo -e \"\nAPP_IMAGE=${DOCKER_REPO}:${TAG}\" >> .env
-        docker compose up -d --force-recreate
+        sudo docker compose up -d --force-recreate
       "
   rules:
     - if: '$DEPLOY_MODE == "rollback"'
