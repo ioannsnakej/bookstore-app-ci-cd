@@ -4,15 +4,15 @@
 ![notify](/attachments/app.png)
 
 
- ## Требования
+## Требования
 
 - python 3.12
 - postgresql 16
 
 ## Запуск
-Для запуска проекта выполнить:
+Для локального запуска проекта выполнить:
 ```bash
-git clone https://gitlab.com/khodyrev-ivan/diplom.git
+git clone https://gitlab.com/khodyrev-ivan/bookstore-app-ci-cd.git
 cd diplom/
 cp env.example .env #заменить значения переменных
 docker compose up -d --build
@@ -41,45 +41,86 @@ curl -X POST \
 # Удалить книгу
 curl http://localhost:8000/delete/23
 ```
+или перейти в браузере по адресу 127.0.0.1:8000/
 
-## Ansible
-Для первоначальной раскатки приложения на новой машине реализованы ansible roles:
-- ./ansible/roles/install-docker
-- ./ansible/roles/setup-bookstore-app
-
-### install-docker
-Устанавливает docker на ВМ (работает только с ubuntu)
-
-### setup-bookstore-app
-Создает директорию для проекта, клонирует репозиторий, генерирует .env на основе переменных 
-- `app_image` - docker image для bookstore-app
-- `db_user` - пользователь для БД
-- `db_name` - имя базы данных
-- `db_host` - хост, где находится postgres
-- `db_password` - пароль пользователя `db_user`
-и запускает проект с помощью docker compose
-
-## GitlabCI
-Для основной раскатки приложения на новой машине выбран инструмент GitlabCI:
-- ./deployment/.gitlab-ci.yml
+## GitLabCI
+Для автоматизации развертывания приложения используется GitLab CI/CD. 
+Пайплайн описан в файле `./deployment/.gitlab-ci.yml`:
 
 ### .gitlab-ci.yml
-Собирает образ, тестирует его и деплоит. Так же релизована функция роллбэка.
-- `linter-app:job` - джоба для проверки кода приложения linter`ом
-- `linter-docker:job` - джоба для проверки Dockerfile linter`ом
-- `build:job` - джоба сборки image и дальнейшего пуша его в dockerhub
-- `test:job` - джоба тестирования собранного image
-- `prepare:job` - джоба подготовки рабочей дериктории проекта и файла `.env` на целевой машине для дальнейшего deploy
-- `deploy-compose:job` - джоба для деплоя приложения  на целевой машине
-- `rollback:job` - джоба для отката приложения на целевой машине к версии image с указанным TAG
-- `telegram_notify_success:job` - джоба уведомления от телеграм-бота об успешной сборке
-- `telegram_notify_failure:job` - джоба уведомления от телеграм-бота о неуспешной сборке
+Пайплайн собирает Docker-образ, тестирует его и выполняет деплой. Также реализована возможность отката (rollback).
 
-Запуск при push:
-![notify](/attachments/fullbuilddeploy.png)
-Ручной запуск с параметром `RUN_TESTS: false` :
-![notify](/attachments/tests_off.png)
-Ручной запуск с параметром `DEPLOY_MODE: rollback` и `TAG: 2288334743`
+- `linter-app:job` - проверка кода приложения (pylint)
+- `linter-docker:job` - проверка Dockerfile (hadolint)
+- `build:job` - сборка образа и публикация в DockerHub
+- `test:job` - тестирование собранного образа
+- `prepare:job` - подготовка рабочей директории и файла `.env` на целевой ВМ
+- `deploy-compose:job` - деплой приложения (ручной запуск)
+- `rollback:job` - откат к указанной версии образа (ручной запуск)
+- `post:job` - уведомление в Telegram при падении пайплайна
+
+## IaC
+Блок IaC реализован в отдельном репозитории  [IaC-terraform-ansible](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)
+
+### Инструменты
+- Terraform
+- Ansible
+
+### Terraform
+- `main.tf` - Провайдер, бэкенд
+- `vars.tf` - Переменные
+- `instances.tf` - Описание ВМ, загрузочного диска, сети
+
+State-файл хранится в S3 хранилище Yandex Cloud.
+Доступ настраивается через сервисный аккаунт и переменные `YC_ACCESS_KEY` и `YC_SECRET_KEY`.
+
+### Ansible
+Для установки docker на новой машине реализована ansible roles:
+- ./ansible/roles/install-docker
+
+#### install-docker
+Устанавливает docker на ВМ (работает только с ubuntu)
+
+### GitLabCI
+
+В репозитории реализовано два pipelines:
+
+#### tf-pipeline.yml
+Отвечает за управление инфраструктурой:
+- `linter:job` - проверка Terraform кода
+- `validate:job` - валидация конфигурации
+- `plan:job` - создание плана изменений
+- `apply:job` - применение изменений (ручной запуск)
+- `destroy:job` - уничтожение инфраструктуры (ручной запуск)
+- `trigger:ansible` - запуск Ansible пайплайна после успешного apply
+
+#### ansible-pipeline.yml
+Отвечает за установку Docker на созданной ВМ:
+- `syntax:check` - проверка синтаксиса playbook
+- `apply-playbook` - применение playbook (ручной запуск)
+
+### Screenshots
+
+#### IaC-pipeline
+![notify](/attachments/setup_infra.png)
+
+#### IaC-notify
+![notify](/attachments/setup_infra_notify.png)
+
+#### Deploy
+![notify](/attachments/build.png)
+
+#### Rollback
 ![notify](/attachments/rollback.png)
-Уведомления от телеграм-бота
-![notify](/attachments/notify_tg.png)
+
+#### DeployandRollback-notify
+![notify](/attachments/build_notify.png)
+
+#### App in browser
+![notify](/attachments/app.png)
+
+#### Destroy
+![notify](/attachments/destroy.png)
+
+#### Destroy-notify
+![notify](/attachments/destroy_infra_notify.png)
