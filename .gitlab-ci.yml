@@ -224,9 +224,10 @@ post:job:
     export TEXT="❌Pipeline:/ ${CI_PIPELINE_URL} failed"
   script:
     - echo "This job runs in the .post stage, after all other stages."
-    - curl -X POST ${API_URL} \
-        -d chat_id=$TELEGRAM_CHAT_ID \
-        -d text="$TEXT" || true
+    - |
+      curl -s -X POST ${API_URL} \
+        -d chat_id=${TELEGRAM_CHAT_ID} \
+        -d text="${TEXT}" \
   when: on_failure
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
