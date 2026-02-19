@@ -114,8 +114,6 @@ build:job:
   script:
     - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_TOKEN\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context=$CI_PROJECT_DIR --dockerfile=$CI_PROJECT_DIR/Dockerfile --destination=${IMAGE_TAG}
-  after_script:
-    - *notify
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
   tags:
@@ -143,8 +141,6 @@ test:job:
     - pytest -v --disable-warnings --maxfail=1 ./app/tests_app.py | tee bookstore-tests_${CI_PIPELINE_ID}.log
   rules:
     - if: '$DEPLOY_MODE == "deploy"'
-  after_script:
-    - *notify
   artifacts:
     paths:
       - bookstore-tests_${CI_PIPELINE_ID}.log
@@ -154,6 +150,8 @@ test:job:
 prepare:job:
   stage: prepare
   extends: .ssh_setup
+  before_script:
+    - apk update && apk add curl bash --no-cache
   script:
     - |
       ssh ${SSH_USER}@${HOST} "
@@ -184,6 +182,8 @@ deploy-compose:job:
     - job: prepare:job
       optional: true
   extends: .ssh_setup
+  before_script:  
+    - apk update && apk add curl bash --no-cache
   script:
     - |
       ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
@@ -200,6 +200,8 @@ deploy-compose:job:
 rollback:job:
   stage: rollback
   extends: .ssh_setup
+  before_script:  
+    - apk update && apk add curl bash --no-cache
   script:
     - |
       if [ -z "${TAG}" ]; then
@@ -221,3 +223,19 @@ rollback:job:
     - when: never
   tags:
     - runner
+
+post:job:
+  stage: .post
+  image: curlimages/curl
+before_script:
+  export TEXT="❌Pipeline:/ ${CI_PIPELINE_URL} failed"
+script:
+  - curl -X POST ${API_URL} \
+      -d chat_id=$TELEGRAM_CHAT_ID \
+      -d text="$TEXT" || true
+when: on_failure
+rules:
+  - if: '$DEPLOY_MODE == "deploy"'
+  - if: '$DEPLOY_MODE == "rollback"'
+tags:
+  - runner
