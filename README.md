@@ -3,6 +3,9 @@
 
 ![notify](/attachments/app.png)
 
+Проект состоит из двух репозиториев:
+- **[bookstore-app-ci-cd](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)** — код приложения и его CI/CD пайплайн
+- **[IaC-terraform-ansible](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)** — инфраструктурный код для создания ВМ в Yandex Cloud
 
 ## Требования
 
@@ -59,8 +62,17 @@ curl http://localhost:8000/delete/23
 - `rollback:job` - откат к указанной версии образа (ручной запуск)
 - `post:job` - уведомление в Telegram при падении пайплайна
 
+### GitLab Variables
+
+- `DB_PASS` - пароль для БД
+- `DB_PASS_TST` - пароль для тестовой БД
+- `DOCKER_TOKEN` - токен для доступа к dockerhub
+- `HOST` - PUB_IP целевой машины
+- `SSH_KEY` - Приватный SSH-ключ. Для подключения к целевой машине.
+- `TELEGRAM_BOT_TOKEN` - Токен бота для отправки уведомлений о результате деплоя
+- `TELEGRAM_CHAT_ID` - ID чата, куда бот отправляет сообщения
+
 ## IaC
-Блок IaC реализован в отдельном репозитории  [IaC-terraform-ansible](https://gitlab.com/khodyrev-ivan/IaC-terraform-ansible)
 
 ### Инструменты
 - Terraform
