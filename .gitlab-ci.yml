@@ -47,7 +47,7 @@ workflow:
       TEXT="${TEXT}.%0A⚠️Please cheak and approve run-deploy"
     fi
     if [ "$CI_JOB_STAGE" == "deploy" ] && [ "$CI_JOB_STATUS" == "success" ]; then
-      TEXT="${TEXT}.%0AYour app is ready: http://${HOST}:8000"
+      TEXT="${TEXT}.%0AYour app is ready: http://$HOST:8000"
     fi
     curl -X POST ${API_URL} \
       -d chat_id=$TELEGRAM_CHAT_ID \
@@ -68,7 +68,6 @@ variables:
   TAG: $[[ inputs.tag ]]
   RUN_TESTS: $[[ inputs.tests ]]
   DEPLOY_MODE: $[[ inputs.mode ]]
-  HOST: 84.201.136.12
   SSH_OPT: -o StrictHostKeyChecking=no
   SSH_USER: gitlab-runner
   PRJ_DIR: /var/www/bookstore-app
@@ -151,7 +150,7 @@ prepare:job:
   extends: .ssh_setup
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "
+      ssh ${SSH_USER}@$HOST "
         test -d /var/www || sudo mkdir -p /var/www;
         sudo chown -R gitlab-runner:gitlab-runner /var/www;
         test -d ${PRJ_DIR} || git clone ${GIT_URL} ${PRJ_DIR};
@@ -181,7 +180,7 @@ deploy-compose:job:
   extends: .ssh_setup
   script:
     - |
-      ssh ${SSH_USER}@${HOST} "cd ${PRJ_DIR}; 
+      ssh ${SSH_USER}@$HOST "cd ${PRJ_DIR}; 
       sudo docker compose pull;
       sudo docker compose up -d"
   after_script:
@@ -201,7 +200,7 @@ rollback:job:
           echo "TAG is missing. Usage: TAG for rollback"
           exit 1
       fi
-      ssh ${SSH_USER}@${HOST} "
+      ssh ${SSH_USER}@$HOST "
         cd ${PRJ_DIR}; 
         test -f .env || touch .env
         sed -i '/^APP_IMAGE=/d' .env
